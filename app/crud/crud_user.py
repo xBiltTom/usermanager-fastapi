@@ -4,6 +4,8 @@ from app.models.user import User
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash
 
+import uuid
+
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """
     Busca un usuario por su correo electrónico.
@@ -33,3 +35,9 @@ async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
     await db.refresh(db_user)
     
     return db_user
+
+async def get_user(db: AsyncSession, id: uuid.UUID) -> User | None :
+    """Buscar un usuario por su ID"""
+    stmt = select(User).where(User.id == id)
+    result = await db.execute(stmt)
+    return result.scalars().first()
