@@ -9,11 +9,13 @@ from app.db.session import get_db
 from app.crud import crud_user
 from app.models.user import User
 
+from typing import Annotated
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db),
-    token : str = Depends(oauth2_scheme)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    token : Annotated[str, Depends(oauth2_scheme)]
 ) -> User :
     """Depedencia para extraer y validar el usuario del token JWT"""
     credentials_exception = HTTPException(
@@ -43,3 +45,15 @@ async def get_current_user(
         raise HTTPException(status_code=400, detail="Usuario inactivo")
     
     return user
+
+def get_current_active_superuser(
+    current_user : Annotated[User, Depends(get_current_user)]
+):
+    """Dependencia para verificar si el usuario logueado es superusuario"""
+    if not current_user.is_superuser :
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El usuario no tiene suficientes privilegios"
+        )
+        
+    return current_user

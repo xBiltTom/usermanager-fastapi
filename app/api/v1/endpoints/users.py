@@ -9,11 +9,16 @@ from app.crud import crud_user
 from app.models.user import User
 from app.api.deps import get_current_user
 
+from typing import Annotated
+
 # Instanciamos el router
 router = APIRouter()
 
+# Creación de una dependencia global de sesión con la base de datos
+DBSession = Annotated[AsyncSession, Depends(get_db)]
+
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(user_in : UserCreate,db: AsyncSession = Depends(get_db)):
+async def register_user(user_in : UserCreate,db : DBSession):
     """Endpoint para registrar un nuevo usuario"""
     # Primero verificamos si el usuario que se quiere crear ya existe
     user = await crud_user.get_user_by_email(db, email=user_in.email);
@@ -27,7 +32,7 @@ async def register_user(user_in : UserCreate,db: AsyncSession = Depends(get_db))
     return new_user
 
 @router.get("/me", response_model=UserResponse)
-async def read_user_me(current_user : User = Depends(get_current_user)):
+async def read_user_me(current_user : Annotated[User,Depends(get_current_user)]):
     """
     Obtener los datos del usuario actualmente autenticado.
     Gracias a Depends, FastApi se encarga de validar todo antes de llegar aquí 
