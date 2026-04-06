@@ -1,10 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash
 
 import uuid
+
+from typing import List
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """
@@ -41,3 +43,25 @@ async def get_user(db: AsyncSession, id: uuid.UUID) -> User | None :
     stmt = select(User).where(User.id == id)
     result = await db.execute(stmt)
     return result.scalars().first()
+
+async def get_users(db : AsyncSession, skip: int = 0, limit: int = 100) -> List[User]:
+    """Obtiene una lista de usuarios con paginación"""
+    stmt = select(User).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+async def update_user(db : AsyncSession, *,db_user:User, user_in: UserUpdate) -> User :
+    update_data = user_in.model_dump(exclude_unset=True)
+    
+    if "password" in update_data:
+        hashed_password = get_password_hash(update_data["password"])
+        del update_data["password"]
+        update_data["hashed_password"] = hashed_password
+    
+    for field, value in update_data.items() :
+        setattr(db_user, field, value)
+    
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
