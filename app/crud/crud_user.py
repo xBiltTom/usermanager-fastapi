@@ -65,3 +65,15 @@ async def update_user(db : AsyncSession, *,db_user:User, user_in: UserUpdate) ->
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
+async def remove_user(db: AsyncSession, id : uuid.UUID) -> User | None :
+    """Elimina un usuario de la base de datos físicamente"""
+    stmt = select(User).where(User.id == id)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    
+    if user :
+        await db.delete()
+        await db.refresh()
+    
+    return user
