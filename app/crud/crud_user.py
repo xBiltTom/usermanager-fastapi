@@ -73,7 +73,7 @@ async def remove_user(db: AsyncSession, id : uuid.UUID) -> User | None :
     user = result.scalars().first()
     
     if user :
-        await db.delete()
-        await db.refresh()
+        await db.delete(user)
+        await db.commit()
     
     return user
