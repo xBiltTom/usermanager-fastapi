@@ -73,3 +73,27 @@ async def update_user(
     user = await crud_user.update_user(db, db_user=user, user_in=user_in)
     return user
     
+@router.delete("/{user_id}", response_model=UserResponse)
+async def delete_user(
+    user_id : uuid.UUID,
+    db : DBSession,
+    current_user : Annotated[User, Depends(get_current_active_superuser)]
+):
+    """
+    Eliminar un usuario.
+    Solo accesible para administradores (superusuarios)
+    """
+    user = await crud_user.get_user(db,id=user_id)
+    if not user :
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if user.id == current_user.id :
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes eliminar tu propia cuenta"
+        )
+        
+    user = await crud_user.remove_user(db, id=user_id)
+    return user
+        
+    
