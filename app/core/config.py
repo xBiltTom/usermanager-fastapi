@@ -14,6 +14,9 @@ class Settings(BaseSettings): #Clase de configuración de la aplicación
     ALGORITHM : str 
     ACCESS_TOKEN_EXPIRE_MINUTES : int
     
+    #Base de datos para testing
+    TEST_DATABASE_URL: str
+    
     #Configuracion para que pydantic lea el archivo .env
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True)
     

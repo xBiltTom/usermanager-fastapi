@@ -1,9 +1,8 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from httpx import AsyncClient
 
 @pytest.mark.asyncio #Este decorador le dice a pytest que esta función es asíncrona
-async def test_register_user():
+async def test_register_user(client: AsyncClient):
     """
     Prueba que un usuario puede registrarse correctamente y que
     la API no devuelve las contraseña en la respuesta.
@@ -17,8 +16,7 @@ async def test_register_user():
     }
     
     # 2. Ejecutamos la petición post
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        response = await ac.post("/api/v1/users/", json=user_data)
+    response = await client.post("/api/v1/users/", json=user_data)
         
     # 3. Verificaciones (Asserts)
     # Comprobamos que el código HTTP es 201 (Recurso creado)
