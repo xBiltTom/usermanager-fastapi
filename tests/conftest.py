@@ -10,13 +10,13 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 
-
+# Crea el motor de la base de datos para testing
 @pytest_asyncio.fixture
 async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(
         settings.TEST_DATABASE_URL,
         echo=False,
-        poolclass=NullPool,
+        poolclass=NullPool, # NullPool evita compartir conexiones entre tests
     )
 
     try:
@@ -25,7 +25,7 @@ async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
         await engine.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture # Crea sesiones en la db de testing
 def session_factory(test_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(
         bind=test_engine,
