@@ -9,10 +9,10 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /code 
 
 # 4. Copiamos el archivo de requerimientos primero (para aprovechar el caché de Docker)
-COPY requeriments.txt /code
+COPY requirements.txt /code
 
 # 5. Instalamos las dependencias
-RUN pip install --no-cache-dir -r requeriments.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 6. Copiamos el resto de nuestro código al contenedor
 COPY . /code/
