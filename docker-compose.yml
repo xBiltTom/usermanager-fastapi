@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  # Servicio de base de datos
+  db:
+    image: postgres:15-alpine
+    container_name: usermanager_db
+    restart: always
+    enviroment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Para persistencia de datos (no se borran al dormir el contenedor)
+  
+  # Servicio de API 
+  api:
+    build: .
+    container_name: usermanagment_api
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env # Le pasamos todas las variables de entorno
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.initial_data &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+# Declaramos el volumen persistente para la base de datos
+volumes:
+  postgres_data:
