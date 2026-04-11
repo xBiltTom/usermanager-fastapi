@@ -17,6 +17,10 @@ class Settings(BaseSettings): #Clase de configuración de la aplicación
     #Base de datos para testing
     TEST_DATABASE_URL: str
     
+    #Configuracion del primer superusuario
+    FIRST_SUPERUSER_EMAIL: str
+    FIRST_SUPERUSER_PASSWORD: str
+    
     #Configuracion para que pydantic lea el archivo .env
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True)
     

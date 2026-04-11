@@ -77,3 +77,24 @@ async def remove_user(db: AsyncSession, id : uuid.UUID) -> User | None :
         await db.commit()
     
     return user
+
+async def create_superuser(db: AsyncSession, user_in: UserCreate) -> User:
+    """
+    Crea un usuario administrador (superusuario) en el sistema.
+    A diferencia de create_user, este forzará is_superuser=True
+    """
+    
+    hashed_password = get_password_hash(user_in.password)
+    
+    db_user = User(
+        email = user_in.email,
+        hashed_password = hashed_password,
+        full_name = user_in.full_name,
+        is_active=True,
+        is_superuser=True # Para el superusuario es True
+    )
+    
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
