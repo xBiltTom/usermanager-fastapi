@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 # Importamos nuestras dependencias, schemas y crud
 from app.db.session import get_db
@@ -14,12 +16,18 @@ import uuid
 
 # Instanciamos el router
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # Creación de una dependencia global de sesión con la base de datos
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(user_in : UserCreate,db : DBSession):
+@limiter.limit("10/hour")
+async def register_user(
+    request: Request,
+    user_in : UserCreate,
+    db : DBSession
+):
     """Endpoint para registrar un nuevo usuario"""
     # Primero verificamos si el usuario que se quiere crear ya existe
     user = await crud_user.get_user_by_email(db, email=user_in.email);
@@ -33,7 +41,11 @@ async def register_user(user_in : UserCreate,db : DBSession):
     return new_user
 
 @router.get("/me", response_model=UserResponse)
-async def read_user_me(current_user : Annotated[User,Depends(get_current_user)]):
+@limiter.limit("30/minute")
+async def read_user_me(
+    request: Request,
+    current_user : Annotated[User,Depends(get_current_user)]
+):
     """
     Obtener los datos del usuario actualmente autenticado.
     Gracias a Depends, FastApi se encarga de validar todo antes de llegar aquí 
@@ -41,7 +53,9 @@ async def read_user_me(current_user : Annotated[User,Depends(get_current_user)])
     return current_user
 
 @router.get("/", response_model= List[UserResponse])
+@limiter.limit("20/minute")
 async def read_users(
+    request: Request,
     db : DBSession,
     current_user : Annotated[User,Depends(get_current_active_superuser)],
     skip : int = 0,
@@ -55,7 +69,9 @@ async def read_users(
     return users
 
 @router.patch("/{user_id}",response_model=UserResponse)
+@limiter.limit("20/minute")
 async def update_user(
+    request: Request,
     user_id : uuid.UUID,
     user_in : UserUpdate,
     db : DBSession,
@@ -74,7 +90,9 @@ async def update_user(
     return user
     
 @router.delete("/{user_id}", response_model=UserResponse)
+@limiter.limit("10/minute")
 async def delete_user(
+    request: Request,
     user_id : uuid.UUID,
     db : DBSession,
     current_user : Annotated[User, Depends(get_current_active_superuser)]
