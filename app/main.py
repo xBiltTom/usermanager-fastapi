@@ -6,6 +6,9 @@ from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.api.v1.endpoints import users, auth
 
+from app.db.session import AsyncSessionLocal
+from sqlalchemy import text
+
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
@@ -43,3 +46,13 @@ app.include_router(
 @limiter.limit("30/minute")
 def root(request: Request):
     return {"message": "Bienvenido a la API de gestión de usuarios"}
+
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    try:
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("SELECT 1"))
+        return {"status" : "ok" , "database" : "connected"}
+    except Exception:
+        return {"status" : "error" , "database" : "disconnected"}
