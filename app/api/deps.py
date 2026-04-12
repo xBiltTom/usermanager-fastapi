@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.crud import crud_user
 from app.models.user import User
+from app.utils.exceptions import InactiveUserError, InsufficientPermissionsError
 
 from typing import Annotated
 
@@ -42,8 +43,8 @@ async def get_current_user(
         raise credentials_exception
     
     if not user.is_active :
-        raise HTTPException(status_code=400, detail="Usuario inactivo")
-    
+        raise InactiveUserError()
+
     return user
 
 def get_current_active_superuser(
@@ -51,9 +52,6 @@ def get_current_active_superuser(
 ):
     """Dependencia para verificar si el usuario logueado es superusuario"""
     if not current_user.is_superuser :
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="El usuario no tiene suficientes privilegios"
-        )
-        
+        raise InsufficientPermissionsError()
+
     return current_user

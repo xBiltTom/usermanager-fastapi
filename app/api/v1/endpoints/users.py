@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -10,6 +10,11 @@ from app.crud import crud_user
 
 from app.models.user import User
 from app.api.deps import get_current_user, get_current_active_superuser
+from app.utils.exceptions import (
+    DuplicateEmailError,
+    UserNotFoundError,
+    CannotDeleteOwnAccountError,
+)
 
 from typing import Annotated, List
 import uuid
@@ -32,10 +37,7 @@ async def register_user(
     # Primero verificamos si el usuario que se quiere crear ya existe
     user = await crud_user.get_user_by_email(db, email=user_in.email);
     if user :
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo electrónico ya está registrado en el sistema"
-        )
+        raise DuplicateEmailError(email=user_in.email)
     # De no existir, creamos el usuario
     new_user = await crud_user.create_user(db,user_in=user_in)
     return new_user
@@ -81,11 +83,11 @@ async def update_user(
     Actualizar un usuario específico por ID.
     Solo accesible para administradores (superusuarios).
     """
-    
+
     user = await crud_user.get_user(db, id=user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
+        raise UserNotFoundError(identifier=str(user_id))
+
     user = await crud_user.update_user(db, db_user=user, user_in=user_in)
     return user
     
@@ -103,14 +105,11 @@ async def delete_user(
     """
     user = await crud_user.get_user(db,id=user_id)
     if not user :
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
+        raise UserNotFoundError(identifier=str(user_id))
+
     if user.id == current_user.id :
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No puedes eliminar tu propia cuenta"
-        )
-        
+        raise CannotDeleteOwnAccountError()
+
     user = await crud_user.remove_user(db, id=user_id)
     return user
         

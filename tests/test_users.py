@@ -68,6 +68,6 @@ async def test_normal_user_cannot_read_all_users(client: AsyncClient):
     # 4. Verificaciones de seguridad
     # 403 es un error http de falta de permisos para acceder a la ruta
     assert response.status_code == 403
-    assert response.json()["detail"] == "El usuario no tiene suficientes privilegios"
+    assert response.json()["error"]["message"] == "El usuario no tiene suficientes privilegios"
     
     
