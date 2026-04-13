@@ -5,7 +5,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
-from app.api.v1.endpoints import users, auth
+from app.api.v1.router import api_router
 
 from app.db.session import AsyncSessionLocal
 from sqlalchemy import text
@@ -22,10 +22,7 @@ from app.utils.exceptions import AppException
 
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION
-)
+app = FastAPI(title=settings.PROJECT_NAME,version=settings.VERSION)
 
 app.state.limiter = limiter
 
@@ -49,18 +46,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-
-app.include_router(
-    users.router,
-    prefix=f"{settings.API_V1_STR}/users",
-    tags=["Users"]
-)
-
-app.include_router(
-    auth.router,
-    prefix=f"{settings.API_V1_STR}/auth",
-    tags=["Authentication"]
-)
+app.include_router(api_router,prefix=f"{settings.API_V1_STR}")
 
 @app.get("/")
 @limiter.limit("30/minute")
