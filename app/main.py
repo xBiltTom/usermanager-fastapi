@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import HTTPException, RequestValidationError
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
@@ -15,6 +15,7 @@ from app.utils.errors import (
     http_exception_handler,
     validation_exception_handler,
     generic_exception_handler,
+    rate_limit_exception_handler,
     RequestIDMiddleware,
 )
 from app.utils.exceptions import AppException
@@ -34,9 +35,9 @@ app.add_middleware(RequestIDMiddleware)
 # Handlers de errores (orden: más específico → más genérico)
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configuración de CORS
 # En desarrollo se permite todo ["*""]. En producción solo el dominio del front

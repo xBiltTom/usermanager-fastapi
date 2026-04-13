@@ -27,8 +27,6 @@ class UserNotFoundError(AppException):
 
     def __init__(self, identifier: str | int | None = None):
         message = "Usuario no encontrado"
-        if identifier:
-            message = f"Usuario no encontrado"
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             error_code="USER_NOT_FOUND",
@@ -42,7 +40,7 @@ class DuplicateEmailError(AppException):
 
     def __init__(self, email: str):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             error_code="DUPLICATE_EMAIL",
             message="El correo electrónico ya está registrado en el sistema",
             details={"email": email}
@@ -54,7 +52,7 @@ class InactiveUserError(AppException):
 
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             error_code="INACTIVE_USER",
             message="El usuario está desactivado"
         )
@@ -77,7 +75,7 @@ class CannotDeleteOwnAccountError(AppException):
 
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             error_code="CANNOT_DELETE_OWN_ACCOUNT",
             message="No puedes eliminar tu propia cuenta"
         )
