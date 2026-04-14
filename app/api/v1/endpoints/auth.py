@@ -10,12 +10,14 @@ from app.crud import crud_user
 from app.db.session import get_db
 from app.utils.exceptions import InvalidCredentialsError
 
+from app.schemas.token import Token
+
 from typing import Annotated
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
-@router.post("/login", response_model=dict)
+@router.post("/login", response_model=Token)
 @limiter.limit("5/minute")
 async def login_access_token(
     request: Request,
